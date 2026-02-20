@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c18w7gg3fq2ly"]
+
+[ext_resource type="PackedScene" uid="uid://b4y6nichh0vg" path="res://Scenes/Board/board.tscn" id="1_1r6ip"]
+
+[node name="Main" type="Node2D" unique_id=221108971]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=548385207]
+position = Vector2(64, -64)
+zoom = Vector2(5.9, 5.9)
+
+[node name="Board" parent="." unique_id=2141829194 instance=ExtResource("1_1r6ip")]
+BOARD_SIZE = 8
+CELL_WIDTH = 16
