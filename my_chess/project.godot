@@ -21,6 +21,10 @@ window/size/viewport_width=1024
 window/size/viewport_height=768
 window/stretch/mode="canvas_items"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdscript-templates/plugin.cfg")
+
 [input]
 
 RIGHT_MOUSE_BUTTON={

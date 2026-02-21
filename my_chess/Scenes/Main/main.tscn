@@ -54,17 +54,17 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -50.0
-offset_right = 200.0
-offset_bottom = 50.0
+offset_left = -337.5
+offset_top = -75.0
+offset_right = 337.5
+offset_bottom = 75.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/White_Pieces" unique_id=1260226311]
 layout_mode = 0
-offset_right = 475.0
-offset_bottom = 100.0
+offset_right = 675.0
+offset_bottom = 150.0
 theme_override_constants/separation = 25
 
 [node name="WKNIGHTN" type="Button" parent="CanvasLayer/White_Pieces/HBoxContainer" unique_id=1438895081 groups=["white_pieces"]]

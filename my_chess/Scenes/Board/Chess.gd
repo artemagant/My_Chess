@@ -1,5 +1,6 @@
 extends Sprite2D
 
+
 enum PN { # Pieces Numbers For Board
 	BPOWNN = -1,
 	BKNIGHTN = -2,
@@ -53,6 +54,13 @@ var state: bool = false # true - move; false - select
 var moves: = [] # Possible moves
 var selected_piece: Vector2 # Index of selected piece
 var promotion_cell = null
+
+var white_king = false
+var black_king = false
+var white_rook_left = false
+var white_rook_right = false
+var black_rook_left = false
+var black_rook_right = false
 #endregion
 
 func _ready() -> void:
@@ -158,9 +166,41 @@ func delete_dots() -> void: # Delete dots
 func set_move(y_index, x_index) -> void: # Move piece
 	for move in moves: # Check for every move
 		if move.x == y_index and move.y == x_index: # Check if move is in moves
-			match board[selected_piece.x][selected_piece.y]: # For powns promotion 
+			# Match special moves
+			match board[selected_piece.x][selected_piece.y]:
+				# Pown promote
 				PN.WPOWNN: if move.x == 7: promote(move)
 				PN.BPOWNN: if move.x == 0: promote(move)
+				# For disable castle
+				PN.WROCKN: if selected_piece.x == 0 and selected_piece.y == 0: white_rook_left = true
+				elif selected_piece.x == 0 and selected_piece.y == 7: white_rook_right = true
+				PN.BROCKN: if selected_piece.x == 7 and selected_piece.y == 0: black_rook_left = true
+				elif selected_piece.x == 7 and selected_piece.y == 7: black_rook_right = true
+				# Castle 
+				PN.WKINGN: if selected_piece.x == 0 and selected_piece.y == 4: 
+					white_king = true
+					if move.y == 2:
+						white_rook_left = true
+						white_rook_right = true
+						board[0][0] = PN.EMPTY
+						board[0][3] = PN.WROCKN
+					elif move.y == 6:
+						white_rook_left = true
+						white_rook_right = true
+						board[0][7] = PN.EMPTY
+						board[0][5] = PN.WROCKN
+				PN.BKINGN: if selected_piece.x == 7 and selected_piece.y == 4: 
+					black_king = true
+					if move.y == 2:
+						black_rook_left = true
+						black_rook_right = true
+						board[7][0] = PN.EMPTY
+						board[7][3] = PN.BROCKN
+					elif move.y == 6:
+						black_rook_left = true
+						black_rook_right = true
+						board[7][7] = PN.EMPTY
+						board[7][5] = PN.BROCKN
 			
 			board[y_index][x_index] = board[selected_piece.x][selected_piece.y] # Move piece
 			board[selected_piece.x][selected_piece.y] = PN.EMPTY # Delete pice
@@ -262,6 +302,17 @@ func get_king_moves() -> Array: # King
 		if group.size() > 0:
 			_moves.append(group)
 	
+	if white and !white_king:
+		if !white_rook_left and is_empty(Vector2(0, 1)) and is_empty(Vector2(0, 2)) and is_empty(Vector2(0, 3)):
+			_moves.append([Vector2(0, 2)])
+		if !white_rook_right and is_empty(Vector2(0, 5)) and is_empty(Vector2(0, 6)):
+			_moves.append([Vector2(0, 6)])
+	elif !white and !black_king:
+		if !black_rook_left and is_empty(Vector2(7, 1)) and is_empty(Vector2(7, 2)) and is_empty(Vector2(7, 3)):
+			_moves.append([Vector2(7, 2)])
+		if !black_rook_right and is_empty(Vector2(7, 5)) and is_empty(Vector2(7, 6)):
+			_moves.append([Vector2(7, 6)])
+	
 	return _moves
 func get_knight_moves() -> Array: # Knight
 	var _moves: = []
@@ -327,7 +378,6 @@ func is_enemy(pos: Vector2) -> bool: # Check if cell enemy
 	if white and board[pos.x][pos.y] < PN.EMPTY or !white and board[pos.x][pos.y] > PN.EMPTY: return true
 	return false
 #endregion
-
 func promote(pos: Vector2):
 	promotion_cell = pos
 	white_promotion.visible = white
