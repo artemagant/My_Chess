@@ -61,6 +61,8 @@ var white_rook_left = false
 var white_rook_right = false
 var black_rook_left = false
 var black_rook_right = false
+
+var en_passant = null
 #endregion
 
 func _ready() -> void:
@@ -164,13 +166,28 @@ func delete_dots() -> void: # Delete dots
 		dot.queue_free()
 
 func set_move(y_index, x_index) -> void: # Move piece
+	var just_now = false
 	for move in moves: # Check for every move
 		if move.x == y_index and move.y == x_index: # Check if move is in moves
 			# Match special moves
 			match board[selected_piece.x][selected_piece.y]:
-				# Pown promote
-				PN.WPOWNN: if move.x == 7: promote(move)
-				PN.BPOWNN: if move.x == 0: promote(move)
+				# Pown promote and en_passant
+				PN.WPOWNN: 
+					if move.x == 7: promote(move)
+					if move.x == 3 and selected_piece.x == 1: 
+						en_passant = move
+						just_now = true
+					elif en_passant != null:
+						if en_passant.y == move.y and selected_piece.y != move.y and en_passant.x == selected_piece.x:
+							board[en_passant.x][en_passant.y] = PN.EMPTY
+				PN.BPOWNN: 
+					if move.x == 0: promote(move)
+					if move.x == 4 and selected_piece.x == 6: 
+						en_passant = move
+						just_now = true
+					elif en_passant != null:
+						if en_passant.y == move.y and selected_piece.y != move.y and en_passant.x == selected_piece.x:
+							board[en_passant.x][en_passant.y] = PN.EMPTY
 				# For disable castle
 				PN.WROCKN: if selected_piece.x == 0 and selected_piece.y == 0: white_rook_left = true
 				elif selected_piece.x == 0 and selected_piece.y == 7: white_rook_right = true
@@ -201,7 +218,7 @@ func set_move(y_index, x_index) -> void: # Move piece
 						black_rook_right = true
 						board[7][7] = PN.EMPTY
 						board[7][5] = PN.BROCKN
-			
+			if !just_now: en_passant = null
 			board[y_index][x_index] = board[selected_piece.x][selected_piece.y] # Move piece
 			board[selected_piece.x][selected_piece.y] = PN.EMPTY # Delete pice
 			white = !white # Change turn
@@ -338,6 +355,7 @@ func get_pawn_moves() -> Array: # Pown
 	var group_1: = []
 	var group_2: = []
 	var group_3: = []
+	var group_4: = []
 	
 	# Check for direction
 	if white: direction = Vector2(1, 0)
@@ -346,6 +364,10 @@ func get_pawn_moves() -> Array: # Pown
 	# Check if first move
 	if white and selected_piece.x == 1 or !white and selected_piece.x == 6:
 		is_first_move = true
+	
+	# En_Passant
+	if en_passant != null and (white and selected_piece.x == 4 or !white and selected_piece.x == 3) and abs(en_passant.y - selected_piece.y) == 1:
+		group_4.append(en_passant+direction)
 	
 	# One cell forward
 	var pos = selected_piece + direction
@@ -366,7 +388,7 @@ func get_pawn_moves() -> Array: # Pown
 	if is_valid_position(pos) and is_enemy(pos):
 		group_3.append(pos)
 	
-	_moves = [group_1, group_2, group_3]
+	_moves = [group_1, group_2, group_3, group_4]
 	return _moves
 func is_valid_position(pos: Vector2) -> bool: # Check if cell on the board
 	if pos.x >= 0 and pos.x < BOARD_SIZE and pos.y >= 0 and pos.y < BOARD_SIZE: return true
