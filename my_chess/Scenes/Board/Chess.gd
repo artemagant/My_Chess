@@ -43,6 +43,8 @@ const TEXTURE_HOLDER = preload("uid://d3cyn0rmw3q6u")
 @onready var piece: = $Pieces
 @onready var dots: = $Dots
 @onready var turn_: = $Turn
+@onready var white_promotion: = $"../CanvasLayer/White_Pieces"
+@onready var black_promotion: = $"../CanvasLayer/Black_Pieces"
 
 # Variebles
 var board: Array # Board
@@ -50,6 +52,7 @@ var white: bool = true
 var state: bool = false # true - move; false - select
 var moves: = [] # Possible moves
 var selected_piece: Vector2 # Index of selected piece
+var promotion_cell = null
 #endregion
 
 func _ready() -> void:
@@ -66,9 +69,18 @@ func _ready() -> void:
 	# Display board
 	display_board()
 	
+	# Takes buttons groups
+	var white_buttons = get_tree().get_nodes_in_group("white_pieces")
+	var black_buttons = get_tree().get_nodes_in_group("black_pieces")
+	
+	for button in white_buttons:
+		button.pressed.connect(self._on_button_pressed.bind(button))
+	for button in black_buttons:
+		button.pressed.connect(self._on_button_pressed.bind(button))
+	
 # Take the taps on the screen and get the index of selected cell
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
+	if event is InputEventMouseButton and event.pressed and promotion_cell == null:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if is_mouse_out():
 				return
@@ -112,14 +124,14 @@ func display_board() -> void: # Display board from board array
 				PN.BQUEENN: holder.texture = PS.BQUEENS
 				PN.BKINGN: holder.texture = PS.BKINGS
 
-func show_options() -> void:
+func show_options() -> void: # Get moves and show dots
 	moves = get_moves()
 	if moves.is_empty():
 		state = false
 		return
 	show_dots()
 
-func show_dots() -> void:
+func show_dots() -> void: # Show dots
 	var nmoves: Array
 	for group in moves:
 		for i in range(group.size()):
@@ -139,26 +151,31 @@ func show_dots() -> void:
 			holder.global_position = Vector2(move.y * CELL_WIDTH + CELL_WIDTH/2.0, -move.x * CELL_WIDTH - CELL_WIDTH/2.0)
 	moves = nmoves
 
-func delete_dots():
+func delete_dots() -> void: # Delete dots
 	for dot in dots.get_children():
 		dot.queue_free()
 
-func set_move(y_index, x_index):
-	for move in moves:
-		if move.x == y_index and move.y == x_index:
-			board[y_index][x_index] = board[selected_piece.x][selected_piece.y]
-			board[selected_piece.x][selected_piece.y] = PN.EMPTY
-			white = !white
-			display_board()
+func set_move(y_index, x_index) -> void: # Move piece
+	for move in moves: # Check for every move
+		if move.x == y_index and move.y == x_index: # Check if move is in moves
+			match board[selected_piece.x][selected_piece.y]: # For powns promotion 
+				PN.WPOWNN: if move.x == 7: promote(move)
+				PN.BPOWNN: if move.x == 0: promote(move)
+			
+			board[y_index][x_index] = board[selected_piece.x][selected_piece.y] # Move piece
+			board[selected_piece.x][selected_piece.y] = PN.EMPTY # Delete pice
+			white = !white # Change turn
+			display_board() # Update board
 			break
-	delete_dots()
-	state = false
+	delete_dots() # Delete
+	state = false # Reset
+	# Check if new touch is your piece
 	if !state and (white and board[y_index][x_index] > PN.EMPTY or !white and board[y_index][x_index] < PN.EMPTY) :
 		selected_piece = Vector2(y_index, x_index)
 		show_options()
 		state = true
 
-func get_moves() -> Array:
+func get_moves() -> Array: # Get moves from piece
 	var _moves: Array
 	match abs(board[selected_piece.x][selected_piece.y]):
 		PN.WPOWNN: _moves = get_pawn_moves()
@@ -170,15 +187,16 @@ func get_moves() -> Array:
 	return _moves
 
 #region Get moves
-func get_rook_moves() -> Array:
-	var _moves: = []
+func get_rook_moves() -> Array: # Rook
+	var _moves: = [] # Moves: Return
+	# Directions, where piece can go
 	var directions = [Vector2(0, 1), Vector2(0, -1), Vector2(1, 0), Vector2(-1, 0)]
 	
-	for dir in directions:
-		var group: = []
+	for dir in directions: # Go through directions
+		var group: = [] 
 		var pos = selected_piece
 		pos += dir
-		while is_valid_position(pos):
+		while is_valid_position(pos): # Rook can goes infinitely in directions
 			if is_empty(pos): group.append(pos)
 			elif is_enemy(pos):
 				group.append(pos)
@@ -189,7 +207,7 @@ func get_rook_moves() -> Array:
 			_moves.append(group)
 	
 	return _moves
-func get_bishop_moves() -> Array:
+func get_bishop_moves() -> Array: # Bishop
 	var _moves: = []
 	var directions = [Vector2(1, 1), Vector2(1, -1), Vector2(-1, 1), Vector2(-1, -1)]
 	
@@ -208,7 +226,7 @@ func get_bishop_moves() -> Array:
 			_moves.append(group)
 	
 	return _moves
-func get_queen_moves() -> Array:
+func get_queen_moves() -> Array: # Queen
 	var _moves: = []
 	var directions = [Vector2(1, 1), Vector2(1, -1), Vector2(-1, 1), Vector2(-1, -1), 
 	Vector2(0, 1), Vector2(0, -1), Vector2(1, 0), Vector2(-1, 0)]
@@ -228,11 +246,12 @@ func get_queen_moves() -> Array:
 			_moves.append(group)
 	
 	return _moves
-func get_king_moves() -> Array:
+func get_king_moves() -> Array: # King
 	var _moves: = []
 	var directions = [Vector2(1, 1), Vector2(1, -1), Vector2(-1, 1), Vector2(-1, -1), 
 	Vector2(0, 1), Vector2(0, -1), Vector2(1, 0), Vector2(-1, 0)]
 	
+	# Don't need while loop where, because king can move only 1 cell
 	for dir in directions:
 		var group: = []
 		var pos = selected_piece + dir
@@ -244,7 +263,7 @@ func get_king_moves() -> Array:
 			_moves.append(group)
 	
 	return _moves
-func get_knight_moves() -> Array:
+func get_knight_moves() -> Array: # Knight
 	var _moves: = []
 	var directions = [Vector2(-2, 1), Vector2(-2, -1), Vector2(-1, -2), Vector2(1, -2), 
 	Vector2(2, 1), Vector2(2, -1), Vector2(1, 2), Vector2(-1, 2)]
@@ -260,31 +279,38 @@ func get_knight_moves() -> Array:
 			_moves.append(group)
 	
 	return _moves
-func get_pawn_moves() -> Array:
+func get_pawn_moves() -> Array: # Pown
 	var _moves: Array
 	var direction: Vector2
-	var is_first_move: = false
+	var is_first_move: = false # Check if it the first move of piece
+	# Three groups, cos three directions
 	var group_1: = []
 	var group_2: = []
 	var group_3: = []
 	
+	# Check for direction
 	if white: direction = Vector2(1, 0)
 	else: direction = Vector2(-1, 0)
 	
+	# Check if first move
 	if white and selected_piece.x == 1 or !white and selected_piece.x == 6:
 		is_first_move = true
 	
+	# One cell forward
 	var pos = selected_piece + direction
 	if is_valid_position(pos) and is_empty(pos):
 		group_1.append(pos)
+		# Second cell forfard
 		pos = selected_piece + direction * 2
 		if is_first_move and is_valid_position(pos) and is_empty(pos):
 			group_1.append(pos)
 	
+	# Diagonal capture
 	pos = selected_piece + Vector2(direction.x, 1)
 	if is_valid_position(pos) and is_enemy(pos):
 		group_2.append(pos)
 	
+	# Diagonal capture
 	pos = selected_piece + Vector2(direction.x, -1)
 	if is_valid_position(pos) and is_enemy(pos):
 		group_3.append(pos)
@@ -301,3 +327,16 @@ func is_enemy(pos: Vector2) -> bool: # Check if cell enemy
 	if white and board[pos.x][pos.y] < PN.EMPTY or !white and board[pos.x][pos.y] > PN.EMPTY: return true
 	return false
 #endregion
+
+func promote(pos: Vector2):
+	promotion_cell = pos
+	white_promotion.visible = white
+	black_promotion.visible = !white
+
+func _on_button_pressed(button: Button):
+	var piece_number = PN.get(button.name)
+	board[promotion_cell.x][promotion_cell.y] = piece_number
+	white_promotion.visible = false
+	black_promotion.visible = false
+	promotion_cell = null
+	display_board()
