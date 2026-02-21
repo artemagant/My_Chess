@@ -7,8 +7,6 @@
 position = Vector2(64, -64)
 texture = ExtResource("1_bqq0f")
 script = ExtResource("2_ef5ss")
-BOARD_SIZE = null
-CELL_WIDTH = null
 
 [node name="Pieces" type="Node2D" parent="." unique_id=1414948143]
 
