@@ -83,6 +83,7 @@ func _ready() -> void:
 	var white_buttons = get_tree().get_nodes_in_group("white_pieces")
 	var black_buttons = get_tree().get_nodes_in_group("black_pieces")
 	
+	# Connect buttons
 	for button in white_buttons:
 		button.pressed.connect(self._on_button_pressed.bind(button))
 	for button in black_buttons:
@@ -166,7 +167,7 @@ func delete_dots() -> void: # Delete dots
 		dot.queue_free()
 
 func set_move(y_index, x_index) -> void: # Move piece
-	var just_now = false
+	var just_now = false # Check if piece moves just now - for en passant
 	for move in moves: # Check for every move
 		if move.x == y_index and move.y == x_index: # Check if move is in moves
 			# Match special moves
@@ -218,7 +219,7 @@ func set_move(y_index, x_index) -> void: # Move piece
 						black_rook_right = true
 						board[7][7] = PN.EMPTY
 						board[7][5] = PN.BROCKN
-			if !just_now: en_passant = null
+			if !just_now: en_passant = null # Disable en passant 
 			board[y_index][x_index] = board[selected_piece.x][selected_piece.y] # Move piece
 			board[selected_piece.x][selected_piece.y] = PN.EMPTY # Delete pice
 			white = !white # Change turn
@@ -319,6 +320,7 @@ func get_king_moves() -> Array: # King
 		if group.size() > 0:
 			_moves.append(group)
 	
+	# Castle 
 	if white and !white_king:
 		if !white_rook_left and is_empty(Vector2(0, 1)) and is_empty(Vector2(0, 2)) and is_empty(Vector2(0, 3)):
 			_moves.append([Vector2(0, 2)])
@@ -400,12 +402,12 @@ func is_enemy(pos: Vector2) -> bool: # Check if cell enemy
 	if white and board[pos.x][pos.y] < PN.EMPTY or !white and board[pos.x][pos.y] > PN.EMPTY: return true
 	return false
 #endregion
-func promote(pos: Vector2):
+func promote(pos: Vector2): # Visible promote plate
 	promotion_cell = pos
 	white_promotion.visible = white
 	black_promotion.visible = !white
 
-func _on_button_pressed(button: Button):
+func _on_button_pressed(button: Button): # Choose piece for promotion
 	var piece_number = PN.get(button.name)
 	board[promotion_cell.x][promotion_cell.y] = piece_number
 	white_promotion.visible = false

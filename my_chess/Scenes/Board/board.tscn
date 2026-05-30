@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b4y6nichh0vg"]
 
-[ext_resource type="Texture2D" uid="uid://b4vin286gkll" path="res://Art/Boards/ChessBoardRed.png" id="1_ef5ss"]
+[ext_resource type="Texture2D" uid="uid://bkupwa1noy2ig" path="res://Art/Boards/ChessBoardGray.png" id="1_ef5ss"]
 [ext_resource type="Script" uid="uid://dk11vrpcmu06g" path="res://Scenes/Board/Chess.gd" id="2_ef5ss"]
 
 [node name="Board" type="Sprite2D" unique_id=2141829194]
@@ -11,5 +11,6 @@ script = ExtResource("2_ef5ss")
 [node name="Pieces" type="Node2D" parent="." unique_id=1414948143]
 
 [node name="Dots" type="Node2D" parent="." unique_id=1058695390]
+position = Vector2(0, 16)
 
 [node name="Turn" type="Sprite2D" parent="." unique_id=189071546]
